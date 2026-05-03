@@ -1,0 +1,904 @@
+openapi: 3.0.3
+info:
+  title: Sequim Barter API
+  version: 0.1.0
+  description: |
+    REST API for the Sequim Barter v1 web app.
+
+    ## Conventions
+    - All requests/responses use JSON unless noted (photo upload is multipart/form-data).
+    - Field names are camelCase.
+    - Timestamps are ISO 8601 UTC strings.
+    - IDs are UUIDs.
+    - Authenticated endpoints require `Authorization: Bearer <jwt>`.
+    - Pagination is offset/limit-based (`?limit=20&offset=0`).
+
+    ## Auth
+    - JWT bearer tokens, 7-day expiry, no refresh tokens in v1.
+    - Frontend stores the token in `sessionStorage`.
+
+    ## Errors
+    All error responses use the shape:
+    ```json
+    { "error": { "code": "STRING_CODE", "message": "Human-readable message" } }
+    ```
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local dev
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Me
+  - name: Users
+  - name: Categories
+  - name: Listings
+  - name: Offers
+  - name: Messages
+  - name: Deals
+  - name: Ratings
+
+paths:
+  # ---------------- Auth ----------------
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Create a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Account created; returns user + JWT
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: Email or handle already in use
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with email + password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Returns user + JWT
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ---------------- Me ----------------
+  /me:
+    get:
+      tags: [Me]
+      summary: Get the currently authenticated user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [Me]
+      summary: Update own profile (bio only in v1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMeRequest' }
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/listings:
+    get:
+      tags: [Me]
+      summary: List my own listings (any status)
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Listing' }
+                  total: { type: integer }
+
+  /me/offers:
+    get:
+      tags: [Me]
+      summary: List offers I've sent or received
+      parameters:
+        - in: query
+          name: direction
+          required: true
+          schema:
+            type: string
+            enum: [sent, received]
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [PENDING, ACCEPTED, DECLINED, WITHDRAWN]
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Offer' }
+                  total: { type: integer }
+
+  /me/deals:
+    get:
+      tags: [Me]
+      summary: List all deals I'm a participant in
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ACCEPTED, COMPLETED_BY_A, COMPLETED_BY_B, COMPLETED, CANCELLED]
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Deal' }
+                  total: { type: integer }
+
+  /me/inbox:
+    get:
+      tags: [Me]
+      summary: Counts for unread/actionable items (polled by frontend)
+      description: |
+        Frontend polls this on page load and every 30 seconds while the tab is active.
+        Returns counts only — no message bodies.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pendingOffersReceived: { type: integer }
+                  unreadMessages: { type: integer }
+                  dealsAwaitingMyAction: { type: integer }
+                  unratedCompletedDeals: { type: integer }
+
+  # ---------------- Users (public) ----------------
+  /users/{handle}:
+    get:
+      tags: [Users]
+      summary: Public profile by handle
+      parameters:
+        - $ref: '#/components/parameters/Handle'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicProfile' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /users/{handle}/ratings:
+    get:
+      tags: [Users]
+      summary: Paginated ratings received by this user
+      parameters:
+        - $ref: '#/components/parameters/Handle'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Rating' }
+                  total: { type: integer }
+                  averageStars: { type: number, format: float }
+
+  # ---------------- Categories ----------------
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Get the preset list of active categories
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Category' }
+
+  # ---------------- Listings ----------------
+  /listings:
+    get:
+      tags: [Listings]
+      summary: Browse active listings (Sequim only in v1)
+      security: []
+      parameters:
+        - in: query
+          name: categoryId
+          schema: { type: string, format: uuid }
+        - in: query
+          name: q
+          description: Keyword search across title and description
+          schema: { type: string }
+        - in: query
+          name: offerType
+          schema:
+            type: string
+            enum: [TRADE_ONLY, GIFT_ONLY, EITHER]
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Listing' }
+                  total: { type: integer }
+    post:
+      tags: [Listings]
+      summary: Create a new listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateListingRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Listing' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /listings/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Listings]
+      summary: Get a listing by id
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Listing' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Listings]
+      summary: Edit a listing (owner only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateListingRequest' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Listing' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Listings]
+      summary: Soft-delete a listing (owner only)
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /listings/{id}/photos:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Listings]
+      summary: Upload a photo to a listing (max 2 per listing)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                position:
+                  type: integer
+                  enum: [0, 1]
+      responses:
+        '201':
+          description: Uploaded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListingPhoto' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Position already occupied or 2-photo limit reached
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /listings/{id}/photos/{photoId}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+      - in: path
+        name: photoId
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [Listings]
+      summary: Remove a photo from a listing (owner only)
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------- Offers ----------------
+  /listings/{id}/offers:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Offers]
+      summary: Make an offer on a listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOfferRequest' }
+      responses:
+        '201':
+          description: Offer created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Offer' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403':
+          description: |
+            Cannot offer on your own listing, or offer type incompatible
+            with the target listing's allowed offer types.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: You already have a pending offer on this listing
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /offers/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Offers]
+      summary: Get an offer by id (participants only)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Offer' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /offers/{id}/accept:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Offers]
+      summary: Accept an offer (lister only). Creates a Deal and auto-declines sibling offers.
+      responses:
+        '200':
+          description: Returns the resulting Deal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Deal' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Offer is not in PENDING status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /offers/{id}/decline:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Offers]
+      summary: Decline an offer (lister only)
+      responses:
+        '200':
+          description: Updated offer
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Offer' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Offer is not in PENDING status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /offers/{id}/withdraw:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Offers]
+      summary: Withdraw an offer (offerer only)
+      responses:
+        '200':
+          description: Updated offer
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Offer' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Offer is not in PENDING status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ---------------- Messages ----------------
+  /offers/{id}/messages:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Messages]
+      summary: List messages on this offer/deal thread (participants only)
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Message' }
+                  total: { type: integer }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Messages]
+      summary: Send a message on this thread (participants only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, maxLength: 2000 }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Thread closed (offer withdrawn/declined or deal completed/cancelled)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ---------------- Deals ----------------
+  /deals/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      tags: [Deals]
+      summary: Get a deal by id (participants only)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Deal' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /deals/{id}/mark-complete:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Deals]
+      summary: Mark your side of the deal as complete (participants only)
+      description: |
+        Transitions the deal toward COMPLETED. When both parties have marked complete,
+        status becomes COMPLETED and both are prompted (in-app) to rate each other.
+      responses:
+        '200':
+          description: Updated deal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Deal' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Deal is in a terminal state, or you've already marked complete
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /deals/{id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Deals]
+      summary: Cancel a deal (either participant, before COMPLETED)
+      responses:
+        '200':
+          description: Updated deal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Deal' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Deal is already in a terminal state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  # ---------------- Ratings ----------------
+  /deals/{id}/ratings:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      tags: [Ratings]
+      summary: Rate the other party on a completed deal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateRatingRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Rating' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Deal not COMPLETED, or you've already rated this deal
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+# ============================================================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdPath:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    Handle:
+      in: path
+      name: handle
+      required: true
+      schema: { type: string }
+    Limit:
+      in: query
+      name: limit
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Offset:
+      in: query
+      name: offset
+      schema: { type: integer, minimum: 0, default: 0 }
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Authenticated but not allowed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+
+    # ---- Auth ----
+    RegisterRequest:
+      type: object
+      required: [email, password, handle, zipCode, confirmedAdult]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, maxLength: 100 }
+        handle: { type: string, pattern: '^[a-zA-Z0-9_]{3,30}$' }
+        zipCode: { type: string, pattern: '^[0-9]{5}$', example: '98382' }
+        bio: { type: string, maxLength: 500 }
+        confirmedAdult: { type: boolean }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string, description: JWT bearer token }
+        expiresAt: { type: string, format: date-time }
+        user: { $ref: '#/components/schemas/User' }
+
+    UpdateMeRequest:
+      type: object
+      properties:
+        bio: { type: string, maxLength: 500 }
+
+    # ---- User ----
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        handle: { type: string }
+        bio: { type: string, nullable: true }
+        zipCode: { type: string }
+        averageStars: { type: number, format: float, nullable: true }
+        ratingCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+
+    PublicProfile:
+      type: object
+      properties:
+        handle: { type: string }
+        bio: { type: string, nullable: true }
+        zipCode: { type: string }
+        averageStars: { type: number, format: float, nullable: true }
+        ratingCount: { type: integer }
+        memberSince: { type: string, format: date-time }
+        activeListings:
+          type: array
+          items: { $ref: '#/components/schemas/Listing' }
+
+    # ---- Category ----
+    Category:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+
+    # ---- Listing ----
+    Listing:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        owner: { $ref: '#/components/schemas/UserSummary' }
+        category: { $ref: '#/components/schemas/Category' }
+        title: { type: string }
+        description: { type: string }
+        offerType:
+          type: string
+          enum: [TRADE_ONLY, GIFT_ONLY, EITHER]
+        status:
+          type: string
+          enum: [ACTIVE, PAUSED, DELETED]
+        photos:
+          type: array
+          items: { $ref: '#/components/schemas/ListingPhoto' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    UserSummary:
+      type: object
+      properties:
+        handle: { type: string }
+        averageStars: { type: number, format: float, nullable: true }
+        ratingCount: { type: integer }
+
+    CreateListingRequest:
+      type: object
+      required: [categoryId, title, description, offerType]
+      properties:
+        categoryId: { type: string, format: uuid }
+        title: { type: string, minLength: 5, maxLength: 100 }
+        description: { type: string, maxLength: 2000 }
+        offerType:
+          type: string
+          enum: [TRADE_ONLY, GIFT_ONLY, EITHER]
+
+    UpdateListingRequest:
+      type: object
+      properties:
+        categoryId: { type: string, format: uuid }
+        title: { type: string, minLength: 5, maxLength: 100 }
+        description: { type: string, maxLength: 2000 }
+        offerType:
+          type: string
+          enum: [TRADE_ONLY, GIFT_ONLY, EITHER]
+        status:
+          type: string
+          enum: [ACTIVE, PAUSED]
+
+    ListingPhoto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string, format: uri }
+        position: { type: integer, enum: [0, 1] }
+
+    # ---- Offer ----
+    Offer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        listing: { $ref: '#/components/schemas/Listing' }
+        fromUser: { $ref: '#/components/schemas/UserSummary' }
+        toUser: { $ref: '#/components/schemas/UserSummary' }
+        offerType:
+          type: string
+          enum: [TRADE, GIFT_REQUEST]
+        offeredListing:
+          oneOf:
+            - { $ref: '#/components/schemas/Listing' }
+            - { type: 'null' }
+        message: { type: string, nullable: true }
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, DECLINED, WITHDRAWN]
+        createdAt: { type: string, format: date-time }
+        respondedAt: { type: string, format: date-time, nullable: true }
+
+    CreateOfferRequest:
+      type: object
+      required: [offerType]
+      properties:
+        offerType:
+          type: string
+          enum: [TRADE, GIFT_REQUEST]
+        offeredListingId:
+          type: string
+          format: uuid
+          description: Required when offerType=TRADE; must be null when GIFT_REQUEST
+        message: { type: string, maxLength: 1000 }
+
+    # ---- Deal ----
+    Deal:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        offerId: { type: string, format: uuid }
+        dealType:
+          type: string
+          enum: [TRADE, GIFT]
+        participantA: { $ref: '#/components/schemas/UserSummary' }
+        participantB: { $ref: '#/components/schemas/UserSummary' }
+        listingA: { $ref: '#/components/schemas/Listing' }
+        listingB:
+          oneOf:
+            - { $ref: '#/components/schemas/Listing' }
+            - { type: 'null' }
+        status:
+          type: string
+          enum: [ACCEPTED, COMPLETED_BY_A, COMPLETED_BY_B, COMPLETED, CANCELLED]
+        acceptedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
+        cancelledAt: { type: string, format: date-time, nullable: true }
+        cancelledByUserId: { type: string, format: uuid, nullable: true }
+
+    # ---- Message ----
+    Message:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        offerId: { type: string, format: uuid }
+        sender: { $ref: '#/components/schemas/UserSummary' }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+        readAt: { type: string, format: date-time, nullable: true }
+
+    # ---- Rating ----
+    Rating:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        dealId: { type: string, format: uuid }
+        rater: { $ref: '#/components/schemas/UserSummary' }
+        ratee: { $ref: '#/components/schemas/UserSummary' }
+        stars: { type: integer, minimum: 1, maximum: 5 }
+        review: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    CreateRatingRequest:
+      type: object
+      required: [stars]
+      properties:
+        stars: { type: integer, minimum: 1, maximum: 5 }
+        review: { type: string, maxLength: 1000 }

@@ -103,3 +103,5 @@ People in Sequim, WA have skills, goods, and time they could exchange with neigh
 - Backend hosting provider choice (decide before deployment)
 - Domain name (decide before launch)
 - Terms of Service / Privacy Policy (must exist before public launch)
+- **Photo storage backend** (local disk, S3, Cloudinary, etc.) — decide before US-3 implementation
+- **JWT token lifetime** — currently 7 days; revisit (1 day may be safer) once we have a sense of user behavior
