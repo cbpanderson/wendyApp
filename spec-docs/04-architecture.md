@@ -5,7 +5,7 @@
 | Layer | Choice |
 |---|---|
 | Language | Java 21 (LTS) |
-| Framework | Spring Boot 3.3.x |
+| Framework | Spring Boot 3.5.x |
 | Build tool | Maven (via Maven Wrapper `./mvnw`) |
 | Web layer | Spring Web MVC (synchronous) |
 | Persistence | Spring Data JPA + Hibernate |
