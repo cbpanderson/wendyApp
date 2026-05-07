@@ -45,7 +45,8 @@ springdoc:
 
 # Allowed ZIP codes (v1: Sequim only)
 sequim:
-  allowed-zips: 98382
+  allowed-zips:
+    - "98382"
 
 logging:
   level:
