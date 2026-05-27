@@ -62,6 +62,24 @@ export function getMyListings(limit = 20, offset = 0): Promise<ListingPage> {
   return api<ListingPage>(`/me/listings?limit=${limit}&offset=${offset}`);
 }
 
+export interface BrowseFilters {
+  categoryId?: string;
+  q?: string;
+  offerType?: OfferType;
+  limit?: number;
+  offset?: number;
+}
+
+export function browseListings(filters: BrowseFilters = {}): Promise<ListingPage> {
+  const params = new URLSearchParams();
+  if (filters.categoryId) params.set('categoryId', filters.categoryId);
+  if (filters.q && filters.q.trim()) params.set('q', filters.q.trim());
+  if (filters.offerType) params.set('offerType', filters.offerType);
+  params.set('limit', String(filters.limit ?? 20));
+  params.set('offset', String(filters.offset ?? 0));
+  return api<ListingPage>(`/listings?${params.toString()}`);
+}
+
 export function getListing(id: string): Promise<Listing> {
   return api<Listing>(`/listings/${id}`);
 }

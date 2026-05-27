@@ -20,7 +20,10 @@ export default function HomePage() {
             <Typography>
               Signed in as <strong>@{user.handle}</strong>
             </Typography>
-            <Button component={RouterLink} to="/listings/new" variant="contained">
+            <Button component={RouterLink} to="/listings" variant="contained">
+              Browse listings
+            </Button>
+            <Button component={RouterLink} to="/listings/new" variant="outlined">
               Create a listing
             </Button>
             <Button component={RouterLink} to="/me/listings" variant="outlined">
@@ -38,7 +41,10 @@ export default function HomePage() {
           </Stack>
         ) : (
           <Stack direction="row" spacing={2}>
-            <Button component={RouterLink} to="/signup" variant="contained" size="large">
+            <Button component={RouterLink} to="/listings" variant="contained" size="large">
+              Browse listings
+            </Button>
+            <Button component={RouterLink} to="/signup" variant="outlined" size="large">
               Sign up
             </Button>
             <Button component={RouterLink} to="/login" variant="outlined" size="large">

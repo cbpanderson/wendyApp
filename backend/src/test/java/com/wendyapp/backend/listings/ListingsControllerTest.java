@@ -330,6 +330,156 @@ class ListingsControllerTest {
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_FAILED"));
     }
 
+    // ------------------------ Browse (US-4) ------------------------
+
+    private UUID createListingAs(User u, String token, String title, String description,
+                                 String offerType, UUID categoryId) throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("categoryId", categoryId.toString());
+        body.put("title", title);
+        body.put("description", description);
+        body.put("offerType", offerType);
+        MvcResult result = mockMvc.perform(post("/listings")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(body)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return UUID.fromString(objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText());
+    }
+
+    @Test
+    void browse_returnsOnlyActiveListings() throws Exception {
+        UUID active = createListingAs(alice, aliceToken, "Garden eggs", "Fresh.", "EITHER", cat.getId());
+        UUID paused = createListingAs(alice, aliceToken, "Honey jar", "Local raw.", "EITHER", cat.getId());
+        UUID deleted = createListingAs(alice, aliceToken, "Apples bag", "Crisp.", "EITHER", cat.getId());
+        // Pause one directly via repo
+        var p = listings.findById(paused).orElseThrow();
+        p.setStatus(Listing.Status.PAUSED);
+        listings.save(p);
+        // Delete one via API
+        mockMvc.perform(delete("/listings/" + deleted)
+                .header("Authorization", "Bearer " + aliceToken)).andExpect(status().isNoContent());
+
+        MvcResult r = mockMvc.perform(get("/listings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andReturn();
+        String body = r.getResponse().getContentAsString();
+        assertThat(body).contains(active.toString());
+        assertThat(body).doesNotContain(paused.toString());
+        assertThat(body).doesNotContain(deleted.toString());
+    }
+
+    @Test
+    void browse_filterByCategory() throws Exception {
+        var actives = categories.findAllByActiveTrueOrderByNameAsc();
+        Category catA = actives.get(0);
+        Category catB = actives.get(1);
+        UUID inA = createListingAs(alice, aliceToken, "Thing in A", "Desc.", "EITHER", catA.getId());
+        UUID inB = createListingAs(alice, aliceToken, "Thing in B", "Desc.", "EITHER", catB.getId());
+
+        MvcResult r = mockMvc.perform(get("/listings").param("categoryId", catA.getId().toString()))
+                .andExpect(status().isOk()).andReturn();
+        String body = r.getResponse().getContentAsString();
+        assertThat(body).contains(inA.toString());
+        assertThat(body).doesNotContain(inB.toString());
+    }
+
+    @Test
+    void browse_keywordMatchesTitleOrDescription_caseInsensitive() throws Exception {
+        UUID withInTitle = createListingAs(alice, aliceToken, "Sourdough starter", "Bubbly.", "EITHER", cat.getId());
+        UUID withInDesc = createListingAs(alice, aliceToken, "Mystery bag", "Includes sourDOUGH bread.", "EITHER", cat.getId());
+        UUID unrelated = createListingAs(alice, aliceToken, "Garden gloves", "Cotton.", "EITHER", cat.getId());
+
+        MvcResult r = mockMvc.perform(get("/listings").param("q", "SOURDOUGH"))
+                .andExpect(status().isOk()).andReturn();
+        String body = r.getResponse().getContentAsString();
+        assertThat(body).contains(withInTitle.toString());
+        assertThat(body).contains(withInDesc.toString());
+        assertThat(body).doesNotContain(unrelated.toString());
+    }
+
+    @Test
+    void browse_filterByOfferType() throws Exception {
+        UUID gift = createListingAs(alice, aliceToken, "Free spare tile", "Extra.", "GIFT_ONLY", cat.getId());
+        UUID trade = createListingAs(alice, aliceToken, "Trade-only herbs", "Basil.", "TRADE_ONLY", cat.getId());
+
+        MvcResult r = mockMvc.perform(get("/listings").param("offerType", "GIFT_ONLY"))
+                .andExpect(status().isOk()).andReturn();
+        String body = r.getResponse().getContentAsString();
+        assertThat(body).contains(gift.toString());
+        assertThat(body).doesNotContain(trade.toString());
+    }
+
+    @Test
+    void browse_pagination_returnsCorrectTotalAndPage() throws Exception {
+        // Create 12 active listings
+        for (int i = 0; i < 12; i++) {
+            createListingAs(alice, aliceToken, "Listing number " + i, "Desc " + i, "EITHER", cat.getId());
+        }
+        MvcResult page1 = mockMvc.perform(get("/listings").param("limit", "10").param("offset", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(12))
+                .andExpect(jsonPath("$.items.length()").value(10))
+                .andReturn();
+        MvcResult page2 = mockMvc.perform(get("/listings").param("limit", "10").param("offset", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(12))
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andReturn();
+        // Pages shouldn't overlap
+        var p1ids = objectMapper.readTree(page1.getResponse().getContentAsString()).get("items");
+        var p2ids = objectMapper.readTree(page2.getResponse().getContentAsString()).get("items");
+        assertThat(p1ids.get(0).get("id").asText())
+                .isNotEqualTo(p2ids.get(0).get("id").asText());
+    }
+
+    @Test
+    void browse_excludesNonSequimUserListings() throws Exception {
+        // Insert a user with a non-Sequim ZIP directly via the repo, bypassing AllowedZipsConfig.
+        // (Signup would reject this ZIP — we're testing the browse-side filter, so we go direct.)
+        User outsider = users.save(new User("out@example.com",
+                passwordEncoder.encode("correct-horse-battery"), "outsider", "90210", true));
+        // Persist a listing for the outsider directly (no controller path lets us do this with
+        // a non-Sequim user, since auth filter requires a registered user — but JwtService accepts any UUID).
+        String outsiderToken = jwtService.issueFor(outsider.getId()).token();
+        UUID hidden = createListingAs(outsider, outsiderToken, "Outsider widget", "Far away.", "EITHER", cat.getId());
+        UUID shown = createListingAs(alice, aliceToken, "Local widget", "Nearby.", "EITHER", cat.getId());
+
+        MvcResult r = mockMvc.perform(get("/listings")).andExpect(status().isOk()).andReturn();
+        String body = r.getResponse().getContentAsString();
+        assertThat(body).contains(shown.toString());
+        assertThat(body).doesNotContain(hidden.toString());
+    }
+
+    // ------------------------ Detail (US-5) ------------------------
+
+    @Test
+    void getListingById_returnsOwnerSummaryAndCategoryAndPhotos() throws Exception {
+        UUID id = createListingAs(alice, aliceToken);
+        mockMvc.perform(get("/listings/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id.toString()))
+                .andExpect(jsonPath("$.owner.handle").value("alice"))
+                .andExpect(jsonPath("$.owner.ratingCount").exists())
+                .andExpect(jsonPath("$.category.id").value(cat.getId().toString()))
+                .andExpect(jsonPath("$.category.name").exists())
+                .andExpect(jsonPath("$.photos").isArray())
+                .andExpect(jsonPath("$.title").value("Fresh garden eggs"));
+    }
+
+    @Test
+    void getListingById_deletedListing_returns404() throws Exception {
+        UUID id = createListingAs(alice, aliceToken);
+        mockMvc.perform(delete("/listings/" + id)
+                .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/listings/" + id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
+    }
+
     @Test
     void deletePhoto_returns204() throws Exception {
         UUID id = createListingAs(alice, aliceToken);

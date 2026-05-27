@@ -1,5 +1,6 @@
 package com.wendyapp.backend.listings;
 
+import com.wendyapp.backend.config.AllowedZipsConfig;
 import com.wendyapp.backend.domain.Listing;
 import com.wendyapp.backend.domain.ListingRepository;
 import com.wendyapp.backend.domain.User;
@@ -9,6 +10,8 @@ import com.wendyapp.backend.listings.dto.ListingPhotoDto;
 import com.wendyapp.backend.listings.dto.UpdateListingRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,20 +27,45 @@ public class ListingsController {
 
     private final ListingService service;
     private final ListingRepository listings;
+    private final AllowedZipsConfig allowedZips;
 
-    public ListingsController(ListingService service, ListingRepository listings) {
+    public ListingsController(ListingService service, ListingRepository listings, AllowedZipsConfig allowedZips) {
         this.service = service;
         this.listings = listings;
+        this.allowedZips = allowedZips;
     }
 
     @GetMapping
     public java.util.Map<String, Object> browse(
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Listing.OfferType offerType,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        var page = listings.findByStatusOrderByCreatedAtDesc(
-                Listing.Status.ACTIVE,
-                PageRequest.of(offset / Math.max(1, limit), limit)
-        );
+        var zips = allowedZips.asSet();
+        var pageable = PageRequest.of(offset / Math.max(1, limit), limit,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        final String keyword = (q == null || q.isBlank()) ? null : q.trim().toLowerCase();
+        Specification<Listing> spec = (root, query, cb) -> {
+            var preds = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+            preds.add(cb.equal(root.get("status"), Listing.Status.ACTIVE));
+            preds.add(root.get("owner").get("zipCode").in(zips));
+            if (categoryId != null) {
+                preds.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+            if (offerType != null) {
+                preds.add(cb.equal(root.get("offerType"), offerType));
+            }
+            if (keyword != null) {
+                String like = "%" + keyword + "%";
+                preds.add(cb.or(
+                        cb.like(cb.lower(root.get("title")), like),
+                        cb.like(cb.lower(root.get("description")), like)
+                ));
+            }
+            return cb.and(preds.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+        var page = listings.findAll(spec, pageable);
         return java.util.Map.of(
                 "items", page.getContent().stream().map(ListingDto::from).toList(),
                 "total", page.getTotalElements()

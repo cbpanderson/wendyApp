@@ -152,9 +152,34 @@ export const handlers = [
     })
   ),
 
-  http.get('/api/v1/listings/:id', ({ params }) =>
-    HttpResponse.json({
-      id: params.id,
+  http.get('/api/v1/listings/:id', ({ params }) => {
+    const id = String(params.id);
+    if (id === 'listing-deleted' || id === 'listing-missing') {
+      return HttpResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'Listing not found' } },
+        { status: 404 }
+      );
+    }
+    if (id === 'listing-bobs') {
+      return HttpResponse.json({
+        id,
+        owner: { handle: 'bob', averageStars: 4.5, ratingCount: 2 },
+        category: { id: 'cat-honey', name: 'Honey', slug: 'honey' },
+        title: "Bob's honey",
+        description: 'Local raw wildflower honey.',
+        offerType: 'EITHER',
+        status: 'ACTIVE',
+        photos: [
+          { id: 'p1', url: '/uploads/bobs-honey-1.jpg', position: 0 },
+          { id: 'p2', url: '/uploads/bobs-honey-2.jpg', position: 1 },
+        ],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+      });
+    }
+    // Default: Alice's listing (owner matches the seeded test user).
+    return HttpResponse.json({
+      id,
       owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
       category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
       title: 'Dozen brown eggs',
@@ -164,8 +189,8 @@ export const handlers = [
       photos: [],
       createdAt: '2026-05-01T00:00:00Z',
       updatedAt: '2026-05-01T00:00:00Z',
-    })
-  ),
+    });
+  }),
 
   http.post('/api/v1/listings', async ({ request }) => {
     const body = (await request.json()) as {
@@ -221,4 +246,72 @@ export const handlers = [
       { status: 201 }
     )
   ),
+
+  // ---------- US-4 (browse) ----------
+  http.get('/api/v1/listings', ({ request }) => {
+    const url = new URL(request.url);
+    const categoryId = url.searchParams.get('categoryId') ?? undefined;
+    const q = url.searchParams.get('q')?.toLowerCase() ?? undefined;
+    const offerType = url.searchParams.get('offerType') ?? undefined;
+    const limit = Number(url.searchParams.get('limit') ?? '20');
+    const offset = Number(url.searchParams.get('offset') ?? '0');
+
+    const all = [
+      {
+        id: 'listing-honey',
+        owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        category: { id: 'cat-honey', name: 'Honey', slug: 'honey' },
+        title: 'Local raw honey',
+        description: 'A jar of wildflower honey.',
+        offerType: 'EITHER',
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-03T00:00:00Z',
+        updatedAt: '2026-05-03T00:00:00Z',
+      },
+      {
+        id: 'listing-eggs',
+        owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+        title: 'Dozen brown eggs',
+        description: 'Backyard hens, super fresh.',
+        offerType: 'GIFT_ONLY',
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-02T00:00:00Z',
+        updatedAt: '2026-05-02T00:00:00Z',
+      },
+      {
+        id: 'listing-lawn',
+        owner: { handle: 'bob', averageStars: 4.5, ratingCount: 2 },
+        category: { id: 'cat-lawn', name: 'Lawn Care', slug: 'lawn-care' },
+        title: 'Lawn mowing service',
+        description: 'One free mow.',
+        offerType: 'TRADE_ONLY',
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+      },
+    ];
+
+    let filtered = all;
+    if (categoryId) filtered = filtered.filter((l) => l.category.id === categoryId);
+    if (offerType) filtered = filtered.filter((l) => l.offerType === offerType);
+    if (q) {
+      filtered = filtered.filter(
+        (l) =>
+          l.title.toLowerCase().includes(q) ||
+          l.description.toLowerCase().includes(q)
+      );
+    }
+
+    const items = filtered.slice(offset, offset + limit);
+    return HttpResponse.json({ items, total: filtered.length });
+  }),
+
+  // ---------- US-5 (detail) ----------
+  // (Note: handlers earlier in the array win, so the simple /listings/:id stub above
+  // currently handles the detail. We extend it by replacing that one to support
+  // 404 for known-deleted IDs and a richer payload for the detail-test seed.)
 ];
