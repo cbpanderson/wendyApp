@@ -16,5 +16,24 @@ services:
       timeout: 5s
       retries: 5
 
+  # Separate Postgres for backend integration tests. No persistent volume —
+  # data is ephemeral. Runs on port 5433 so it never collides with the dev DB.
+  postgres-test:
+    image: postgres:16
+    container_name: wendyapp-postgres-test
+    environment:
+      POSTGRES_USER: wendyapp
+      POSTGRES_PASSWORD: wendyapp
+      POSTGRES_DB: wendyapp_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wendyapp -d wendyapp_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   wendyapp-pg-data:

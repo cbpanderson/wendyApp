@@ -1,0 +1,10 @@
+# Test-only overrides. Spring Boot loads this in addition to the main
+# application.yml when running under src/test/.
+#
+# Points the test suite at the dedicated `postgres-test` service on :5433
+# (defined in docker-compose.yml). Never touches the dev database.
+spring:
+  datasource:
+    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5433/wendyapp_test}
+    username: ${TEST_DATABASE_USER:wendyapp}
+    password: ${TEST_DATABASE_PASSWORD:wendyapp}

@@ -44,7 +44,7 @@ npm install
 Three terminals:
 
 ```bash
-# 1. Database
+# 1. Databases (dev on :5432, test on :5433)
 docker compose up -d
 
 # 2. Backend (http://localhost:8080)
