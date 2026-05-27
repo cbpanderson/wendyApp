@@ -20,6 +20,12 @@ export default function HomePage() {
             <Typography>
               Signed in as <strong>@{user.handle}</strong>
             </Typography>
+            <Button component={RouterLink} to="/listings/new" variant="contained">
+              Create a listing
+            </Button>
+            <Button component={RouterLink} to="/me/listings" variant="outlined">
+              My listings
+            </Button>
             <Button component={RouterLink} to="/me" variant="outlined">
               My profile
             </Button>

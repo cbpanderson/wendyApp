@@ -1,5 +1,7 @@
 package com.wendyapp.backend.users;
 
+import com.wendyapp.backend.domain.ListingPhotoRepository;
+import com.wendyapp.backend.domain.ListingRepository;
 import com.wendyapp.backend.domain.User;
 import com.wendyapp.backend.domain.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,10 +28,14 @@ class UsersControllerTest {
 
     @Autowired MockMvc mockMvc;
     @Autowired UserRepository users;
+    @Autowired ListingRepository listings;
+    @Autowired ListingPhotoRepository listingPhotos;
     @Autowired PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setup() {
+        listingPhotos.deleteAll();
+        listings.deleteAll();
         users.deleteAll();
         User alice = new User(
                 "alice@example.com",

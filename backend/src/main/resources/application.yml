@@ -20,6 +20,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  servlet:
+    multipart:
+      max-file-size: 3MB
+      max-request-size: 5MB
+
 server:
   port: 8080
   servlet:
@@ -31,6 +36,9 @@ app:
     secret: ${JWT_SECRET:dev-only-secret-please-replace-with-32-or-more-random-bytes}
     # 7 days, in milliseconds (revisit per spec PRD §7)
     expiration-ms: 604800000
+  uploads:
+    # Local-filesystem photo storage (swap for S3/Cloudinary later).
+    dir: ${UPLOADS_DIR:./uploads}
 
 # CORS allowed origins (comma-separated). Vite dev server by default.
 cors:

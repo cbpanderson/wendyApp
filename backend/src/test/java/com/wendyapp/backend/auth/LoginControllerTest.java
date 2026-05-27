@@ -1,6 +1,8 @@
 package com.wendyapp.backend.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wendyapp.backend.domain.ListingPhotoRepository;
+import com.wendyapp.backend.domain.ListingRepository;
 import com.wendyapp.backend.domain.User;
 import com.wendyapp.backend.domain.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,10 +30,14 @@ class LoginControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @Autowired UserRepository users;
+    @Autowired ListingRepository listings;
+    @Autowired ListingPhotoRepository listingPhotos;
     @Autowired PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void cleanDb() {
+        listingPhotos.deleteAll();
+        listings.deleteAll();
         users.deleteAll();
         User alice = new User(
                 "alice@example.com",

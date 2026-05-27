@@ -121,4 +121,104 @@ export const handlers = [
   http.get('/api/v1/users/:handle/ratings', () =>
     HttpResponse.json({ items: [], total: 0, averageStars: 0 })
   ),
+
+  // ---------- Categories ----------
+  http.get('/api/v1/categories', () =>
+    HttpResponse.json([
+      { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+      { id: 'cat-lawn', name: 'Lawn Care', slug: 'lawn-care' },
+      { id: 'cat-honey', name: 'Honey', slug: 'honey' },
+    ])
+  ),
+
+  // ---------- Listings ----------
+  http.get('/api/v1/me/listings', () =>
+    HttpResponse.json({
+      items: [
+        {
+          id: 'listing-1',
+          owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+          category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+          title: 'Dozen brown eggs',
+          description: 'Backyard hens, super fresh.',
+          offerType: 'EITHER',
+          status: 'ACTIVE',
+          photos: [],
+          createdAt: '2026-05-01T00:00:00Z',
+          updatedAt: '2026-05-01T00:00:00Z',
+        },
+      ],
+      total: 1,
+    })
+  ),
+
+  http.get('/api/v1/listings/:id', ({ params }) =>
+    HttpResponse.json({
+      id: params.id,
+      owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+      category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+      title: 'Dozen brown eggs',
+      description: 'Backyard hens, super fresh.',
+      offerType: 'EITHER',
+      status: 'ACTIVE',
+      photos: [],
+      createdAt: '2026-05-01T00:00:00Z',
+      updatedAt: '2026-05-01T00:00:00Z',
+    })
+  ),
+
+  http.post('/api/v1/listings', async ({ request }) => {
+    const body = (await request.json()) as {
+      title: string;
+      categoryId: string;
+      description: string;
+      offerType: string;
+    };
+    if (body.title.length < 5) {
+      return HttpResponse.json(
+        { error: { code: 'VALIDATION_FAILED', message: 'title: too short' } },
+        { status: 400 }
+      );
+    }
+    return HttpResponse.json(
+      {
+        id: 'listing-new',
+        owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        category: { id: body.categoryId, name: 'Fresh Eggs', slug: 'fresh-eggs' },
+        title: body.title,
+        description: body.description,
+        offerType: body.offerType,
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+      },
+      { status: 201 }
+    );
+  }),
+
+  http.patch('/api/v1/listings/:id', async ({ params, request }) => {
+    const body = (await request.json()) as { title?: string };
+    return HttpResponse.json({
+      id: params.id,
+      owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+      category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+      title: body.title ?? 'Dozen brown eggs',
+      description: 'Backyard hens, super fresh.',
+      offerType: 'EITHER',
+      status: 'ACTIVE',
+      photos: [],
+      createdAt: '2026-05-01T00:00:00Z',
+      updatedAt: '2026-05-02T00:00:00Z',
+    });
+  }),
+
+  http.delete('/api/v1/listings/:id', () => new HttpResponse(null, { status: 204 })),
+
+  http.post('/api/v1/listings/:id/photos', () =>
+    HttpResponse.json(
+      { id: 'photo-1', url: '/uploads/photo-1.jpg', position: 0 },
+      { status: 201 }
+    )
+  ),
 ];

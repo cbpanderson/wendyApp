@@ -4,6 +4,10 @@ import com.wendyapp.backend.auth.EmailAlreadyInUseException;
 import com.wendyapp.backend.auth.HandleAlreadyInUseException;
 import com.wendyapp.backend.auth.InvalidCredentialsException;
 import com.wendyapp.backend.auth.InvalidZipException;
+import com.wendyapp.backend.listings.ForbiddenException;
+import com.wendyapp.backend.listings.InvalidListingException;
+import com.wendyapp.backend.listings.ListingNotFoundException;
+import com.wendyapp.backend.listings.PhotoLimitReachedException;
 import com.wendyapp.backend.users.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +15,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -59,6 +64,31 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
         return error(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
+    }
+
+    @ExceptionHandler(ListingNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleListingNotFound(ListingNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Map<String, Object>> handleForbidden(ForbiddenException ex) {
+        return error(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidListingException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidListing(InvalidListingException ex) {
+        return error(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", ex.getMessage());
+    }
+
+    @ExceptionHandler(PhotoLimitReachedException.class)
+    public ResponseEntity<Map<String, Object>> handlePhotoLimit(PhotoLimitReachedException ex) {
+        return error(HttpStatus.CONFLICT, "PHOTO_LIMIT", ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUpload(MaxUploadSizeExceededException ex) {
+        return error(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "File exceeds 2 MB limit");
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String code, String message) {

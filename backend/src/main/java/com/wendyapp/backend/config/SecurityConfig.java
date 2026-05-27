@@ -48,7 +48,7 @@ public class SecurityConfig {
                     "/auth/**",
                     "/actuator/health"
                 ).permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/**", "/categories", "/listings", "/listings/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/users/**", "/categories", "/listings", "/listings/*", "/uploads/**").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))

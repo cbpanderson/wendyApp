@@ -4,6 +4,9 @@ import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import PublicProfilePage from './pages/PublicProfilePage';
+import CreateListingPage from './pages/CreateListingPage';
+import MyListingsPage from './pages/MyListingsPage';
+import EditListingPage from './pages/EditListingPage';
 
 export default function App() {
   return (
@@ -12,6 +15,9 @@ export default function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/me" element={<ProfilePage />} />
+      <Route path="/me/listings" element={<MyListingsPage />} />
+      <Route path="/listings/new" element={<CreateListingPage />} />
+      <Route path="/listings/:id/edit" element={<EditListingPage />} />
       <Route path="/users/:handle" element={<PublicProfilePage />} />
     </Routes>
   );

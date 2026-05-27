@@ -32,3 +32,6 @@ frontend/src/generated/
 
 # Postgres data (if anyone runs Postgres outside Docker)
 pgdata/
+
+# Local photo storage (US-3)
+backend/uploads/
