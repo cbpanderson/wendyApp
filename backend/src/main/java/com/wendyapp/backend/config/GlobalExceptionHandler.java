@@ -2,7 +2,9 @@ package com.wendyapp.backend.config;
 
 import com.wendyapp.backend.auth.EmailAlreadyInUseException;
 import com.wendyapp.backend.auth.HandleAlreadyInUseException;
+import com.wendyapp.backend.auth.InvalidCredentialsException;
 import com.wendyapp.backend.auth.InvalidZipException;
+import com.wendyapp.backend.users.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -47,6 +49,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidZipException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidZip(InvalidZipException ex) {
         return error(HttpStatus.BAD_REQUEST, "INVALID_ZIP", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> handleBadCreds(InvalidCredentialsException ex) {
+        return error(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> error(HttpStatus status, String code, String message) {

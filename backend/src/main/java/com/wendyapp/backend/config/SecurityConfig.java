@@ -1,13 +1,16 @@
 package com.wendyapp.backend.config;
 
+import com.wendyapp.backend.auth.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,10 +19,11 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Minimal security config.
+ * Security config. Stateless JWT auth.
  *
- * Today: opens Swagger and (anticipated) /auth/** endpoints; everything else still
- * requires auth. JWT filter will be wired in when US-1 (sign-up) is implemented.
+ * Public endpoints: /auth/**, Swagger, health, GET /users/**, GET /categories,
+ * GET /listings (browse is public per spec).
+ * Everything else requires a valid bearer token (parsed by {@link JwtAuthFilter}).
  */
 @Configuration
 public class SecurityConfig {
@@ -28,7 +32,9 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtAuthFilter jwtAuthFilter,
+                                                   JsonAuthEntryPoint entryPoint) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -42,8 +48,11 @@ public class SecurityConfig {
                     "/auth/**",
                     "/actuator/health"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/users/**", "/categories", "/listings", "/listings/*").permitAll()
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .httpBasic(httpBasic -> httpBasic.disable())
             .formLogin(form -> form.disable());
 

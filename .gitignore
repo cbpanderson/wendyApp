@@ -23,6 +23,7 @@ build/
 
 # Auto-generated
 frontend/src/generated/
+*.tsbuildinfo
 
 # Local env / secrets
 .env

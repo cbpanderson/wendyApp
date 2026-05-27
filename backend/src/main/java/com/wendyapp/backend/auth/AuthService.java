@@ -1,6 +1,7 @@
 package com.wendyapp.backend.auth;
 
 import com.wendyapp.backend.auth.dto.AuthResponse;
+import com.wendyapp.backend.auth.dto.LoginRequest;
 import com.wendyapp.backend.auth.dto.RegisterRequest;
 import com.wendyapp.backend.auth.dto.UserDto;
 import com.wendyapp.backend.config.AllowedZipsConfig;
@@ -54,6 +55,18 @@ public class AuthService {
         }
         users.save(user);
 
+        JwtService.IssuedToken token = jwtService.issueFor(user.getId());
+        return new AuthResponse(token.token(), token.expiresAt(), UserDto.fromEntity(user));
+    }
+
+    @Transactional(readOnly = true)
+    public AuthResponse login(LoginRequest req) {
+        String email = req.email().toLowerCase();
+        User user = users.findByEmail(email)
+                .orElseThrow(InvalidCredentialsException::new);
+        if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException();
+        }
         JwtService.IssuedToken token = jwtService.issueFor(user.getId());
         return new AuthResponse(token.token(), token.expiresAt(), UserDto.fromEntity(user));
     }

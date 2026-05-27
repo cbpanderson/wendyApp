@@ -34,8 +34,16 @@ public class JwtService {
     }
 
     public IssuedToken issueFor(UUID userId) {
+        return issueWithTtl(userId, expirationMs);
+    }
+
+    /**
+     * Issue a token with an explicit TTL in milliseconds. A negative ttl yields an
+     * already-expired token (useful for tests). Not exposed via the API.
+     */
+    public IssuedToken issueWithTtl(UUID userId, long ttlMs) {
         Instant now = Instant.now();
-        Instant expiry = now.plusMillis(expirationMs);
+        Instant expiry = now.plusMillis(ttlMs);
         String token = Jwts.builder()
                 .subject(userId.toString())
                 .issuedAt(Date.from(now))

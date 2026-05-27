@@ -1,16 +1,18 @@
-import { Container, Typography, Box } from '@mui/material';
+import { Route, Routes } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import SignupPage from './pages/SignupPage';
+import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
+import PublicProfilePage from './pages/PublicProfilePage';
 
 export default function App() {
   return (
-    <Container maxWidth="md">
-      <Box sx={{ py: 6 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Sequim Barter
-        </Typography>
-        <Typography variant="body1">
-          Trade and gift goods and services with your neighbors. No money involved.
-        </Typography>
-      </Box>
-    </Container>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/me" element={<ProfilePage />} />
+      <Route path="/users/:handle" element={<PublicProfilePage />} />
+    </Routes>
   );
 }
