@@ -508,4 +508,73 @@ export const handlers = [
       respondedAt: '2026-05-11T00:00:00Z',
     })
   ),
+
+  // ---------- US-7 (messages) ----------
+  http.get('/api/v1/offers/:id', ({ params }) => {
+    const id = String(params.id);
+    const withdrawn = id === 'offer-withdrawn';
+    return HttpResponse.json({
+      id,
+      listing: {
+        id: 'listing-bobs',
+        owner: { handle: 'bob', averageStars: null, ratingCount: 0 },
+        category: { id: 'cat-honey', name: 'Honey', slug: 'honey' },
+        title: "Bob's honey",
+        description: 'Local raw.',
+        offerType: 'EITHER',
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+      },
+      fromUser: { handle: 'alice', averageStars: null, ratingCount: 0 },
+      toUser: { handle: 'bob', averageStars: null, ratingCount: 0 },
+      offerType: 'GIFT_REQUEST',
+      offeredListing: null,
+      message: null,
+      status: withdrawn ? 'WITHDRAWN' : 'PENDING',
+      createdAt: '2026-05-10T00:00:00Z',
+      respondedAt: withdrawn ? '2026-05-11T00:00:00Z' : null,
+    });
+  }),
+
+  http.get('/api/v1/offers/:id/messages', ({ params }) => {
+    const id = String(params.id);
+    if (id === 'offer-empty') {
+      return HttpResponse.json({ items: [], total: 0 });
+    }
+    return HttpResponse.json({
+      items: [
+        {
+          id: 'msg-1',
+          offerId: id,
+          sender: { handle: 'alice', averageStars: null, ratingCount: 0 },
+          body: 'Hi there, is this still available?',
+          createdAt: '2026-05-10T10:00:00Z',
+        },
+        {
+          id: 'msg-2',
+          offerId: id,
+          sender: { handle: 'bob', averageStars: null, ratingCount: 0 },
+          body: 'Yes, still available!',
+          createdAt: '2026-05-10T11:00:00Z',
+        },
+      ],
+      total: 2,
+    });
+  }),
+
+  http.post('/api/v1/offers/:id/messages', async ({ params, request }) => {
+    const body = (await request.json()) as { body: string };
+    return HttpResponse.json(
+      {
+        id: 'msg-new',
+        offerId: String(params.id),
+        sender: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        body: body.body,
+        createdAt: new Date().toISOString(),
+      },
+      { status: 201 }
+    );
+  }),
 ];

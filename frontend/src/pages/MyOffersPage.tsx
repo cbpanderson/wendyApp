@@ -187,6 +187,14 @@ export default function MyOffersPage() {
                       )}
                     </Box>
                     <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        component={RouterLink}
+                        to={`/offers/${o.id}`}
+                      >
+                        View thread
+                      </Button>
                       {direction === 'received' && o.status === 'PENDING' && (
                         <>
                           <Button
