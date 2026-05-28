@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -48,7 +49,13 @@ public class SecurityConfig {
                     "/auth/**",
                     "/actuator/health"
                 ).permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/**", "/categories", "/listings", "/listings/*", "/uploads/**").permitAll()
+                .requestMatchers(
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/users/**"),
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/categories"),
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/listings"),
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/listings/*"),
+                    AntPathRequestMatcher.antMatcher(HttpMethod.GET, "/uploads/**")
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))

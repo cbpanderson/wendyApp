@@ -12,6 +12,8 @@ import ListingDetailPage from './pages/ListingDetailPage';
 import MakeOfferPage from './pages/MakeOfferPage';
 import MyOffersPage from './pages/MyOffersPage';
 import OfferThreadPage from './pages/OfferThreadPage';
+import DealPage from './pages/DealPage';
+import MyDealsPage from './pages/MyDealsPage';
 
 export default function App() {
   return (
@@ -28,6 +30,8 @@ export default function App() {
       <Route path="/listings/:id/offer" element={<MakeOfferPage />} />
       <Route path="/me/offers" element={<MyOffersPage />} />
       <Route path="/offers/:id" element={<OfferThreadPage />} />
+      <Route path="/me/deals" element={<MyDealsPage />} />
+      <Route path="/deals/:id" element={<DealPage />} />
       <Route path="/users/:handle" element={<PublicProfilePage />} />
     </Routes>
   );

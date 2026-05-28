@@ -32,6 +32,9 @@ export default function HomePage() {
             <Button component={RouterLink} to="/me/offers?direction=sent" variant="outlined">
               My offers
             </Button>
+            <Button component={RouterLink} to="/me/deals" variant="outlined">
+              My deals
+            </Button>
             <Button component={RouterLink} to="/me" variant="outlined">
               My profile
             </Button>

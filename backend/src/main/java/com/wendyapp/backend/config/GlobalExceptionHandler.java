@@ -8,6 +8,8 @@ import com.wendyapp.backend.listings.ForbiddenException;
 import com.wendyapp.backend.listings.InvalidListingException;
 import com.wendyapp.backend.listings.ListingNotFoundException;
 import com.wendyapp.backend.listings.PhotoLimitReachedException;
+import com.wendyapp.backend.deals.DealNotFoundException;
+import com.wendyapp.backend.deals.InvalidDealException;
 import com.wendyapp.backend.offers.InvalidOfferException;
 import com.wendyapp.backend.offers.OfferConflictException;
 import com.wendyapp.backend.offers.OfferNotFoundException;
@@ -102,6 +104,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OfferConflictException.class)
     public ResponseEntity<Map<String, Object>> handleOfferConflict(OfferConflictException ex) {
         return error(HttpStatus.CONFLICT, "OFFER_CONFLICT", ex.getMessage());
+    }
+
+    @ExceptionHandler(DealNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleDealNotFound(DealNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, "DEAL_NOT_FOUND", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidDealException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidDeal(InvalidDealException ex) {
+        return error(HttpStatus.BAD_REQUEST, "INVALID_DEAL_STATE", ex.getMessage());
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
