@@ -1,7 +1,9 @@
 package com.wendyapp.backend.users;
 
+import com.wendyapp.backend.domain.DealRepository;
 import com.wendyapp.backend.domain.ListingPhotoRepository;
 import com.wendyapp.backend.domain.ListingRepository;
+import com.wendyapp.backend.domain.OfferRepository;
 import com.wendyapp.backend.domain.User;
 import com.wendyapp.backend.domain.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,10 +32,14 @@ class UsersControllerTest {
     @Autowired UserRepository users;
     @Autowired ListingRepository listings;
     @Autowired ListingPhotoRepository listingPhotos;
+    @Autowired OfferRepository offers;
+    @Autowired DealRepository deals;
     @Autowired PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setup() {
+        deals.deleteAll();
+        offers.deleteAll();
         listingPhotos.deleteAll();
         listings.deleteAll();
         users.deleteAll();

@@ -2,8 +2,10 @@ package com.wendyapp.backend.me;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wendyapp.backend.auth.JwtService;
+import com.wendyapp.backend.domain.DealRepository;
 import com.wendyapp.backend.domain.ListingPhotoRepository;
 import com.wendyapp.backend.domain.ListingRepository;
+import com.wendyapp.backend.domain.OfferRepository;
 import com.wendyapp.backend.domain.User;
 import com.wendyapp.backend.domain.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,8 @@ class MeControllerTest {
     @Autowired UserRepository users;
     @Autowired ListingRepository listings;
     @Autowired ListingPhotoRepository listingPhotos;
+    @Autowired OfferRepository offers;
+    @Autowired DealRepository deals;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired JwtService jwtService;
 
@@ -43,6 +47,8 @@ class MeControllerTest {
 
     @BeforeEach
     void setup() {
+        deals.deleteAll();
+        offers.deleteAll();
         listingPhotos.deleteAll();
         listings.deleteAll();
         users.deleteAll();

@@ -49,6 +49,8 @@ class ListingsControllerTest {
     @Autowired CategoryRepository categories;
     @Autowired ListingRepository listings;
     @Autowired ListingPhotoRepository photos;
+    @Autowired OfferRepository offers;
+    @Autowired DealRepository deals;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired JwtService jwtService;
 
@@ -62,6 +64,8 @@ class ListingsControllerTest {
     @BeforeEach
     void setup() {
         // Clear in dependency order
+        deals.deleteAll();
+        offers.deleteAll();
         photos.deleteAll();
         listings.deleteAll();
         users.deleteAll();

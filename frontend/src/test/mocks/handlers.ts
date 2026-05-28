@@ -314,4 +314,198 @@ export const handlers = [
   // (Note: handlers earlier in the array win, so the simple /listings/:id stub above
   // currently handles the detail. We extend it by replacing that one to support
   // 404 for known-deleted IDs and a richer payload for the detail-test seed.)
+
+  // ---------- US-6 (offers) ----------
+  http.post('/api/v1/listings/:id/offers', async ({ params, request }) => {
+    const listingId = String(params.id);
+    const body = (await request.json()) as {
+      offerType: 'TRADE' | 'GIFT_REQUEST';
+      offeredListingId?: string | null;
+      message?: string;
+    };
+    if (listingId === 'listing-own') {
+      return HttpResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'You cannot make an offer on your own listing' } },
+        { status: 403 }
+      );
+    }
+    if (listingId === 'listing-dup') {
+      return HttpResponse.json(
+        { error: { code: 'OFFER_CONFLICT', message: 'You already have a pending offer on this listing' } },
+        { status: 409 }
+      );
+    }
+    return HttpResponse.json(
+      {
+        id: 'offer-new',
+        listing: {
+          id: listingId,
+          owner: { handle: 'bob', averageStars: null, ratingCount: 0 },
+          category: { id: 'cat-honey', name: 'Honey', slug: 'honey' },
+          title: "Bob's honey",
+          description: 'Local raw.',
+          offerType: 'EITHER',
+          status: 'ACTIVE',
+          photos: [],
+          createdAt: '2026-05-01T00:00:00Z',
+          updatedAt: '2026-05-01T00:00:00Z',
+        },
+        fromUser: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        toUser: { handle: 'bob', averageStars: null, ratingCount: 0 },
+        offerType: body.offerType,
+        offeredListing:
+          body.offerType === 'TRADE' && body.offeredListingId
+            ? {
+                id: body.offeredListingId,
+                owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+                category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+                title: 'Dozen brown eggs',
+                description: 'Backyard hens.',
+                offerType: 'EITHER',
+                status: 'ACTIVE',
+                photos: [],
+                createdAt: '2026-05-01T00:00:00Z',
+                updatedAt: '2026-05-01T00:00:00Z',
+              }
+            : null,
+        message: body.message ?? null,
+        status: 'PENDING',
+        createdAt: '2026-05-10T00:00:00Z',
+        respondedAt: null,
+      },
+      { status: 201 }
+    );
+  }),
+
+  http.get('/api/v1/me/offers', ({ request }) => {
+    const url = new URL(request.url);
+    const direction = url.searchParams.get('direction') ?? 'sent';
+    const baseListing = {
+      id: 'listing-bobs',
+      owner: { handle: 'bob', averageStars: null, ratingCount: 0 },
+      category: { id: 'cat-honey', name: 'Honey', slug: 'honey' },
+      title: "Bob's honey",
+      description: 'Local raw.',
+      offerType: 'EITHER',
+      status: 'ACTIVE',
+      photos: [],
+      createdAt: '2026-05-01T00:00:00Z',
+      updatedAt: '2026-05-01T00:00:00Z',
+    };
+    const sent = [
+      {
+        id: 'offer-sent-1',
+        listing: baseListing,
+        fromUser: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        toUser: { handle: 'bob', averageStars: null, ratingCount: 0 },
+        offerType: 'GIFT_REQUEST',
+        offeredListing: null,
+        message: null,
+        status: 'PENDING',
+        createdAt: '2026-05-10T00:00:00Z',
+        respondedAt: null,
+      },
+    ];
+    const received = [
+      {
+        id: 'offer-rec-1',
+        listing: {
+          ...baseListing,
+          id: 'listing-mine',
+          owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+          title: 'My eggs',
+        },
+        fromUser: { handle: 'bob', averageStars: null, ratingCount: 0 },
+        toUser: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        offerType: 'TRADE',
+        offeredListing: baseListing,
+        message: 'Trade?',
+        status: 'PENDING',
+        createdAt: '2026-05-09T00:00:00Z',
+        respondedAt: null,
+      },
+    ];
+    const items = direction === 'received' ? received : sent;
+    return HttpResponse.json({ items, total: items.length });
+  }),
+
+  http.post('/api/v1/offers/:id/accept', ({ params }) =>
+    HttpResponse.json({
+      id: 'deal-new',
+      offerId: String(params.id),
+      dealType: 'TRADE',
+      participantA: { handle: 'alice', averageStars: null, ratingCount: 0 },
+      participantB: { handle: 'bob', averageStars: null, ratingCount: 0 },
+      listingA: {
+        id: 'listing-mine',
+        owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+        title: 'My eggs',
+        description: '',
+        offerType: 'EITHER',
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+      },
+      listingB: null,
+      status: 'ACCEPTED',
+      acceptedAt: '2026-05-11T00:00:00Z',
+      completedAt: null,
+      cancelledAt: null,
+      cancelledByUserId: null,
+    })
+  ),
+
+  http.post('/api/v1/offers/:id/decline', ({ params }) =>
+    HttpResponse.json({
+      id: String(params.id),
+      listing: {
+        id: 'listing-mine',
+        owner: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        category: { id: 'cat-eggs', name: 'Fresh Eggs', slug: 'fresh-eggs' },
+        title: 'My eggs',
+        description: '',
+        offerType: 'EITHER',
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+      },
+      fromUser: { handle: 'bob', averageStars: null, ratingCount: 0 },
+      toUser: { handle: 'alice', averageStars: null, ratingCount: 0 },
+      offerType: 'TRADE',
+      offeredListing: null,
+      message: null,
+      status: 'DECLINED',
+      createdAt: '2026-05-09T00:00:00Z',
+      respondedAt: '2026-05-11T00:00:00Z',
+    })
+  ),
+
+  http.post('/api/v1/offers/:id/withdraw', ({ params }) =>
+    HttpResponse.json({
+      id: String(params.id),
+      listing: {
+        id: 'listing-bobs',
+        owner: { handle: 'bob', averageStars: null, ratingCount: 0 },
+        category: { id: 'cat-honey', name: 'Honey', slug: 'honey' },
+        title: "Bob's honey",
+        description: '',
+        offerType: 'EITHER',
+        status: 'ACTIVE',
+        photos: [],
+        createdAt: '2026-05-01T00:00:00Z',
+        updatedAt: '2026-05-01T00:00:00Z',
+      },
+      fromUser: { handle: 'alice', averageStars: null, ratingCount: 0 },
+      toUser: { handle: 'bob', averageStars: null, ratingCount: 0 },
+      offerType: 'GIFT_REQUEST',
+      offeredListing: null,
+      message: null,
+      status: 'WITHDRAWN',
+      createdAt: '2026-05-10T00:00:00Z',
+      respondedAt: '2026-05-11T00:00:00Z',
+    })
+  ),
 ];

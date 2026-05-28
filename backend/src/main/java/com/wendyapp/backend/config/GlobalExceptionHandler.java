@@ -8,6 +8,9 @@ import com.wendyapp.backend.listings.ForbiddenException;
 import com.wendyapp.backend.listings.InvalidListingException;
 import com.wendyapp.backend.listings.ListingNotFoundException;
 import com.wendyapp.backend.listings.PhotoLimitReachedException;
+import com.wendyapp.backend.offers.InvalidOfferException;
+import com.wendyapp.backend.offers.OfferConflictException;
+import com.wendyapp.backend.offers.OfferNotFoundException;
 import com.wendyapp.backend.users.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -84,6 +87,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PhotoLimitReachedException.class)
     public ResponseEntity<Map<String, Object>> handlePhotoLimit(PhotoLimitReachedException ex) {
         return error(HttpStatus.CONFLICT, "PHOTO_LIMIT", ex.getMessage());
+    }
+
+    @ExceptionHandler(OfferNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleOfferNotFound(OfferNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidOfferException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidOffer(InvalidOfferException ex) {
+        return error(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", ex.getMessage());
+    }
+
+    @ExceptionHandler(OfferConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleOfferConflict(OfferConflictException ex) {
+        return error(HttpStatus.CONFLICT, "OFFER_CONFLICT", ex.getMessage());
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
