@@ -118,9 +118,62 @@ export const handlers = [
     );
   }),
 
-  http.get('/api/v1/users/:handle/ratings', () =>
-    HttpResponse.json({ items: [], total: 0, averageStars: 0 })
-  ),
+  http.get('/api/v1/users/:handle/ratings', ({ params }) => {
+    const handle = params.handle as string;
+    if (handle === 'alice') {
+      return HttpResponse.json({
+        items: [
+          {
+            id: 'rating-1',
+            dealId: 'deal-1',
+            rater: { handle: 'bob', averageStars: null, ratingCount: 0 },
+            ratee: { handle: 'alice', averageStars: 5.0, ratingCount: 1 },
+            stars: 5,
+            review: 'Great trade, very reliable!',
+            createdAt: '2026-05-15T00:00:00Z',
+          },
+        ],
+        total: 1,
+        averageStars: 5.0,
+      });
+    }
+    return HttpResponse.json({ items: [], total: 0, averageStars: null });
+  }),
+
+  http.post('/api/v1/deals/:id/ratings', async ({ params, request }) => {
+    const body = (await request.json()) as { stars: number; review?: string | null };
+    if (body.stars === undefined || body.stars < 1 || body.stars > 5) {
+      return HttpResponse.json(
+        { error: { code: 'VALIDATION_FAILED', message: 'stars: must be between 1 and 5' } },
+        { status: 400 }
+      );
+    }
+    const dealId = String(params.id);
+    if (dealId === 'deal-not-completed') {
+      return HttpResponse.json(
+        { error: { code: 'INVALID_DEAL_STATE', message: 'Cannot rate a deal that is not COMPLETED' } },
+        { status: 400 }
+      );
+    }
+    if (dealId === 'deal-already-rated') {
+      return HttpResponse.json(
+        { error: { code: 'ALREADY_RATED', message: 'You have already submitted a rating for this deal' } },
+        { status: 409 }
+      );
+    }
+    return HttpResponse.json(
+      {
+        id: 'rating-new',
+        dealId,
+        rater: { handle: 'alice', averageStars: null, ratingCount: 0 },
+        ratee: { handle: 'bob', averageStars: body.stars, ratingCount: 1 },
+        stars: body.stars,
+        review: body.review ?? null,
+        createdAt: new Date().toISOString(),
+      },
+      { status: 201 }
+    );
+  }),
 
   // ---------- Categories ----------
   http.get('/api/v1/categories', () =>

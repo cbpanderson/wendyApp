@@ -124,7 +124,7 @@ export default function DealPage() {
               </Button>
             )}
             {status === 'COMPLETED' && (
-              <Button variant="outlined" disabled component={RouterLink} to={`/deals/${id}/rate`}>
+              <Button variant="outlined" component={RouterLink} to={`/deals/${id}/rate`}>
                 Leave a rating
               </Button>
             )}

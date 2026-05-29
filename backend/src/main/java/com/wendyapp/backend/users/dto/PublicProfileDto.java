@@ -24,8 +24,8 @@ public record PublicProfileDto(
                 user.getHandle(),
                 user.getBio(),
                 user.getZipCode(),
-                null, // ratings come in US-9
-                0,
+                user.getAverageStars(),
+                user.getRatingCount(),
                 user.getCreatedAt(),
                 activeListings
         );

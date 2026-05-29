@@ -14,6 +14,7 @@ import MyOffersPage from './pages/MyOffersPage';
 import OfferThreadPage from './pages/OfferThreadPage';
 import DealPage from './pages/DealPage';
 import MyDealsPage from './pages/MyDealsPage';
+import RateDealPage from './pages/RateDealPage';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
       <Route path="/offers/:id" element={<OfferThreadPage />} />
       <Route path="/me/deals" element={<MyDealsPage />} />
       <Route path="/deals/:id" element={<DealPage />} />
+      <Route path="/deals/:id/rate" element={<RateDealPage />} />
       <Route path="/users/:handle" element={<PublicProfilePage />} />
     </Routes>
   );

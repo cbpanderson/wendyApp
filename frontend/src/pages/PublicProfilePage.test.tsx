@@ -34,4 +34,17 @@ describe('PublicProfilePage', () => {
       expect(screen.getByText(/no user with handle/i)).toBeInTheDocument()
     );
   });
+
+  it('shows ratings when present for alice', async () => {
+    renderPublicProfile('alice');
+    await waitFor(() => expect(screen.getByText(/@alice/)).toBeInTheDocument());
+    // The MSW handler returns a rating for alice with review "Great trade, very reliable!"
+    await waitFor(() =>
+      expect(screen.getByText(/Great trade, very reliable!/i)).toBeInTheDocument()
+    );
+    // Shows the average stars summary
+    await waitFor(() =>
+      expect(screen.getByText(/5\.0 \/ 5/i)).toBeInTheDocument()
+    );
+  });
 });

@@ -34,6 +34,12 @@ public class User {
     @Column(name = "confirmed_adult", nullable = false)
     private boolean confirmedAdult;
 
+    @Column(name = "average_stars")
+    private Double averageStars;
+
+    @Column(name = "rating_count", nullable = false)
+    private int ratingCount = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -59,8 +65,12 @@ public class User {
     public String getBio() { return bio; }
     public String getZipCode() { return zipCode; }
     public boolean isConfirmedAdult() { return confirmedAdult; }
+    public Double getAverageStars() { return averageStars; }
+    public int getRatingCount() { return ratingCount; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 
     public void setBio(String bio) { this.bio = bio; }
+    public void setAverageStars(Double averageStars) { this.averageStars = averageStars; }
+    public void setRatingCount(int ratingCount) { this.ratingCount = ratingCount; }
 }

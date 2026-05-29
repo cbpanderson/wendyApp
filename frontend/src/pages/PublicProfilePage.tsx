@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Alert, Box, CircularProgress, Container, Typography } from '@mui/material';
+import { Alert, Box, CircularProgress, Container, Divider, Typography } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { ApiError } from '../api/client';
 import { getPublicProfile, type PublicProfileResponse } from '../api/auth';
+import { getRatingsForUser, type RatingPage } from '../api/ratings';
 
 /**
  * Public profile by handle. Per spec-docs/02-domain.md the email is never exposed
@@ -36,6 +38,12 @@ export default function PublicProfilePage() {
       cancelled = true;
     };
   }, [handle]);
+
+  const { data: ratingsData } = useQuery<RatingPage>({
+    queryKey: ['userRatings', handle],
+    queryFn: () => getRatingsForUser(handle),
+    enabled: !!handle && !notFound,
+  });
 
   if (loading) {
     return (
@@ -74,6 +82,36 @@ export default function PublicProfilePage() {
         <Typography variant="body1" data-testid="public-profile-bio">
           {profile.bio?.trim() ? profile.bio : <em>No bio.</em>}
         </Typography>
+
+        {ratingsData && ratingsData.total > 0 && (
+          <Box sx={{ mt: 4 }}>
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="h6" gutterBottom>
+              Ratings
+            </Typography>
+            {ratingsData.averageStars != null && (
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                ⭐ {ratingsData.averageStars.toFixed(1)} / 5 ({ratingsData.total}{' '}
+                {ratingsData.total === 1 ? 'rating' : 'ratings'})
+              </Typography>
+            )}
+            {ratingsData.items.map((r) => (
+              <Box key={r.id} sx={{ mb: 2, p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                <Typography variant="body2" fontWeight="bold">
+                  @{r.rater.handle} — {'⭐'.repeat(r.stars)}
+                </Typography>
+                {r.review && (
+                  <Typography variant="body2" sx={{ mt: 0.5 }}>
+                    {r.review}
+                  </Typography>
+                )}
+                <Typography variant="caption" color="text.secondary">
+                  {new Date(r.createdAt).toLocaleDateString()}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
       </Box>
     </Container>
   );
