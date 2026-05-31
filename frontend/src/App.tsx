@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
+import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
@@ -18,6 +19,7 @@ import RateDealPage from './pages/RateDealPage';
 
 export default function App() {
   return (
+    <Layout>
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/signup" element={<SignupPage />} />
@@ -36,5 +38,6 @@ export default function App() {
       <Route path="/deals/:id/rate" element={<RateDealPage />} />
       <Route path="/users/:handle" element={<PublicProfilePage />} />
     </Routes>
+    </Layout>
   );
 }

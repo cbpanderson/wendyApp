@@ -1,62 +1,33 @@
-import { Box, Button, Container, Stack, Typography } from '@mui/material';
+import { Box, Button, Container, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 6 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          Sequim Barter
+          Swap with your neighbors.
         </Typography>
         <Typography variant="body1" sx={{ mb: 4 }}>
           Trade and gift goods and services with your neighbors. No money involved.
         </Typography>
 
         {user ? (
-          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-            <Typography>
-              Signed in as <strong>@{user.handle}</strong>
+          <>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              Welcome back, <strong>@{user.handle}</strong>
             </Typography>
-            <Button component={RouterLink} to="/listings" variant="contained">
-              Browse listings
-            </Button>
-            <Button component={RouterLink} to="/listings/new" variant="outlined">
-              Create a listing
-            </Button>
-            <Button component={RouterLink} to="/me/listings" variant="outlined">
-              My listings
-            </Button>
-            <Button component={RouterLink} to="/me/offers?direction=sent" variant="outlined">
-              My offers
-            </Button>
-            <Button component={RouterLink} to="/me/deals" variant="outlined">
-              My deals
-            </Button>
-            <Button component={RouterLink} to="/me" variant="outlined">
-              My profile
-            </Button>
-            <Button component={RouterLink} to={`/users/${user.handle}`} variant="text">
-              Public view
-            </Button>
-            <Button variant="outlined" onClick={logout}>
-              Sign out
-            </Button>
-          </Stack>
-        ) : (
-          <Stack direction="row" spacing={2}>
             <Button component={RouterLink} to="/listings" variant="contained" size="large">
               Browse listings
             </Button>
-            <Button component={RouterLink} to="/signup" variant="outlined" size="large">
-              Sign up
-            </Button>
-            <Button component={RouterLink} to="/login" variant="outlined" size="large">
-              Log in
-            </Button>
-          </Stack>
+          </>
+        ) : (
+          <Button component={RouterLink} to="/listings" variant="contained" size="large">
+            Browse listings
+          </Button>
         )}
       </Box>
     </Container>
