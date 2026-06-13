@@ -97,6 +97,11 @@ export default function NavBar() {
                 >
                   My deals
                 </MenuItem>
+                <MenuItem
+                  onClick={() => { handleActivityClose(); navigate('/me/listings'); }}
+                >
+                  Listings
+                </MenuItem>
               </Menu>
 
               {/* Avatar / handle dropdown */}
