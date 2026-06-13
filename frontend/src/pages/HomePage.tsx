@@ -11,20 +11,6 @@ import { getMyDeals } from '../api/deals';
 function HeroSection() {
   return (
     <Box sx={{ py: { xs: 8, md: 12 }, textAlign: 'center' }}>
-      {/* Eyebrow */}
-      <Typography
-        variant="overline"
-        component="p"
-        sx={{
-          color: '#C4922A',
-          letterSpacing: '0.15em',
-          fontVariant: 'small-caps',
-          mb: 2,
-        }}
-      >
-        Sequim, WA
-      </Typography>
-
       {/* H1 headline */}
       <Typography
         variant="h2"
@@ -41,23 +27,14 @@ function HeroSection() {
         Get what you need.
       </Typography>
 
-      {/* Tagline placeholder */}
-      <Box
-        sx={{
-          border: '1.5px dashed',
-          borderColor: 'divider',
-          borderRadius: 2,
-          px: 2,
-          py: 1,
-          color: 'text.disabled',
-          fontStyle: 'italic',
-          fontSize: 14,
-          display: 'inline-block',
-          mb: 5,
-        }}
+      {/* Tagline */}
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        sx={{ mb: 5, fontSize: 18 }}
       >
-        Tagline coming soon
-      </Box>
+        No money required.
+      </Typography>
 
       {/* CTAs */}
       <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 6 }}>
@@ -84,7 +61,7 @@ function HeroSection() {
         {[
           { value: '28', label: 'Categories' },
           { value: '100%', label: 'No money' },
-          { value: 'Sequim', label: 'Neighbors only' },
+          { value: 'Local', label: 'Neighbors only' },
         ].map((stat) => (
           <Box key={stat.label} sx={{ textAlign: 'center' }}>
             <Typography variant="h4" component="p">
