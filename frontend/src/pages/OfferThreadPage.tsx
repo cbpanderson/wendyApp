@@ -131,12 +131,28 @@ export default function OfferThreadPage() {
           Messages
         </Typography>
 
-        {messages.length === 0 ? (
+        {!offer.message && messages.length === 0 ? (
           <Typography color="text.secondary" sx={{ mb: 3 }}>
             No messages yet.
           </Typography>
         ) : (
           <Stack spacing={2} sx={{ mb: 3 }}>
+            {offer.message && (
+              <Box
+                sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'background.default' }}
+              >
+                <Stack direction="row" spacing={1} alignItems="baseline">
+                  <Typography variant="subtitle2">@{offer.fromUser.handle}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(offer.createdAt).toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    · sent with offer
+                  </Typography>
+                </Stack>
+                <Typography variant="body1">{offer.message}</Typography>
+              </Box>
+            )}
             {messages.map((msg) => (
               <Box
                 key={msg.id}
