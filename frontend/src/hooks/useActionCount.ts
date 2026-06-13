@@ -7,14 +7,14 @@ export function useActionCount(): { count: number } {
   const { user } = useAuth();
 
   const { data: offersData } = useQuery({
-    queryKey: ['me', 'offers', 'received', 'pending'],
-    queryFn: () => getMyOffers('received', { status: 'PENDING', limit: 100 }),
+    queryKey: ['myOffers', 'received'],
+    queryFn: () => getMyOffers('received', { limit: 100 }),
     enabled: !!user,
     refetchInterval: 60000,
   });
 
   const { data: dealsData } = useQuery({
-    queryKey: ['me', 'deals', 'actionable'],
+    queryKey: ['myDeals'],
     queryFn: () => getMyDeals(),
     enabled: !!user,
     refetchInterval: 60000,
@@ -22,7 +22,9 @@ export function useActionCount(): { count: number } {
 
   if (!user) return { count: 0 };
 
-  const pendingOffersCount = offersData?.items.length ?? 0;
+  const pendingOffersCount = (offersData?.items ?? []).filter(
+    (o) => o.status === 'PENDING' && o.toUser.handle === user.handle
+  ).length;
 
   const actionableDealsCount = (dealsData?.items ?? []).filter((deal) => {
     const isParticipantA = user.handle === deal.participantA.handle;
