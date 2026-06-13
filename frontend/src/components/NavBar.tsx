@@ -8,15 +8,18 @@ import {
   Typography,
   Box,
   Divider,
+  Badge,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { useActionCount } from '../hooks/useActionCount';
 
 export default function NavBar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const { count: actionCount } = useActionCount();
   const [activityAnchor, setActivityAnchor] = useState<null | HTMLElement>(null);
   const [avatarAnchor, setAvatarAnchor] = useState<null | HTMLElement>(null);
 
@@ -75,7 +78,9 @@ export default function NavBar() {
                 endIcon={<KeyboardArrowDownIcon />}
                 onClick={handleActivityOpen}
               >
-                My activity
+                <Badge badgeContent={actionCount > 0 ? actionCount : 0} color="error" max={9} invisible={actionCount === 0}>
+                  My activity
+                </Badge>
               </Button>
               <Menu
                 anchorEl={activityAnchor}
