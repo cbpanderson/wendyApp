@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -17,14 +16,9 @@ import {
   Listing,
   OfferType,
 } from '../api/listings';
+import ListingCard from '../components/ListingCard';
 
 const PAGE_SIZE = 20;
-
-function formatOfferType(t: OfferType): string {
-  if (t === 'TRADE_ONLY') return 'Open to trade';
-  if (t === 'GIFT_ONLY') return 'Gift only';
-  return 'Either';
-}
 
 export default function BrowseListingsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -152,35 +146,17 @@ export default function BrowseListingsPage() {
             No listings match your filters yet.
           </Typography>
         ) : (
-          <Stack spacing={2}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+              gap: 2,
+            }}
+          >
             {items.map((l) => (
-              <Box
-                key={l.id}
-                component={RouterLink}
-                to={`/listings/${l.id}`}
-                sx={{
-                  p: 2,
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  display: 'block',
-                  '&:hover': { borderColor: 'primary.main' },
-                }}
-              >
-                <Typography variant="h6">{l.title}</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {l.category.name} · {formatOfferType(l.offerType)} · @{l.owner.handle}
-                </Typography>
-                {l.description && (
-                  <Typography variant="body2" sx={{ mt: 1 }} noWrap>
-                    {l.description}
-                  </Typography>
-                )}
-              </Box>
+              <ListingCard key={l.id} listing={l} />
             ))}
-          </Stack>
+          </Box>
         )}
 
         {hasMore && (
