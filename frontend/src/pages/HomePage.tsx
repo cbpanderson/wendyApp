@@ -1,5 +1,5 @@
 import { Box, Button, Chip, Container, Paper, Stack, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthContext';
 import { getMyOffers } from '../api/offers';
@@ -83,14 +83,18 @@ function StatCard({
   value,
   label,
   highlight,
+  to,
 }: {
   value: number | string;
   label: string;
   highlight?: boolean;
+  to?: string;
 }) {
+  const navigate = useNavigate();
   return (
     <Paper
       elevation={0}
+      onClick={to ? () => navigate(to) : undefined}
       sx={{
         p: 2,
         border: 1,
@@ -98,6 +102,12 @@ function StatCard({
         borderRadius: 2,
         textAlign: 'center',
         flex: 1,
+        cursor: to ? 'pointer' : 'default',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+        '&:hover': to ? {
+          borderColor: 'primary.main',
+          boxShadow: '0 2px 8px rgba(139,74,107,0.12)',
+        } : {},
       }}
     >
       <Typography
@@ -169,9 +179,9 @@ function Dashboard({ handle }: { handle: string }) {
       <Stack direction="row" spacing={2} sx={{ mb: 5 }}>
         {isLoading ? (
           <>
-            <StatCard value="…" label="Pending offers" />
-            <StatCard value="…" label="Active deals" />
-            <StatCard value="…" label="My listings" />
+            <StatCard value="…" label="Pending offers" to="/me/offers?direction=received" />
+            <StatCard value="…" label="Active deals" to="/me/deals" />
+            <StatCard value="…" label="My listings" to="/me/listings" />
           </>
         ) : (
           <>
@@ -179,9 +189,10 @@ function Dashboard({ handle }: { handle: string }) {
               value={pendingCount}
               label="Pending offers"
               highlight={pendingCount > 0}
+              to="/me/offers?direction=received"
             />
-            <StatCard value={dealCount} label="Active deals" />
-            <StatCard value={listingCount} label="My listings" />
+            <StatCard value={dealCount} label="Active deals" to="/me/deals" />
+            <StatCard value={listingCount} label="My listings" to="/me/listings" />
           </>
         )}
       </Stack>
