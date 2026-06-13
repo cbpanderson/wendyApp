@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { Listing } from './listings';
 
 export interface RegisterRequest {
   email: string;
@@ -42,7 +43,7 @@ export interface PublicProfileResponse {
   averageStars: number | null;
   ratingCount: number;
   memberSince: string;
-  activeListings: unknown[];
+  activeListings: Listing[];
 }
 
 export function register(body: RegisterRequest): Promise<AuthResponse> {
