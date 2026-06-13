@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { getDeal, markComplete, cancelDeal } from '../api/deals';
 import type { Deal } from '../api/deals';
 import type { DealStatus } from '../api/offers';
+import { useToast } from '../components/ToastProvider';
 
 function statusColor(
   status: DealStatus
@@ -19,6 +20,7 @@ export default function DealPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   const { data: deal, isLoading, error } = useQuery<Deal>({
     queryKey: ['deal', id],
@@ -30,6 +32,7 @@ export default function DealPage() {
     mutationFn: () => markComplete(id!),
     onSuccess: (updated) => {
       queryClient.setQueryData(['deal', id], updated);
+      showToast('Marked as complete', 'success');
     },
   });
 
@@ -37,6 +40,7 @@ export default function DealPage() {
     mutationFn: () => cancelDeal(id!),
     onSuccess: (updated) => {
       queryClient.setQueryData(['deal', id], updated);
+      showToast('Deal cancelled', 'info');
     },
   });
 

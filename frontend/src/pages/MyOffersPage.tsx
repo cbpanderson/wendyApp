@@ -23,6 +23,7 @@ import {
   OfferStatus,
   withdrawOffer,
 } from '../api/offers';
+import { useToast } from '../components/ToastProvider';
 
 function statusColor(
   status: OfferStatus
@@ -36,6 +37,7 @@ function statusColor(
 export default function MyOffersPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const directionParam = searchParams.get('direction');
   const direction: OfferDirection =
@@ -66,7 +68,7 @@ export default function MyOffersPage() {
     setActionError(null);
     try {
       const deal = await acceptOffer(offer.id);
-      setSuccessMessage('Offer accepted. The deal is open.');
+      showToast('Offer accepted — a deal has been created', 'success');
       // Navigate to deal detail (US-8 will implement this page).
       navigate(`/deals/${deal.id}`);
     } catch (err) {
@@ -79,6 +81,7 @@ export default function MyOffersPage() {
     setActionError(null);
     try {
       await declineOffer(offer.id);
+      showToast('Offer declined', 'info');
       setOffers((prev) =>
         prev.map((o) => (o.id === offer.id ? { ...o, status: 'DECLINED' } : o))
       );
@@ -92,6 +95,7 @@ export default function MyOffersPage() {
     setActionError(null);
     try {
       await withdrawOffer(offer.id);
+      showToast('Offer withdrawn', 'info');
       setOffers((prev) =>
         prev.map((o) => (o.id === offer.id ? { ...o, status: 'WITHDRAWN' } : o))
       );

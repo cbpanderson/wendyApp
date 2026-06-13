@@ -26,6 +26,7 @@ import {
   getListing,
   updateListing,
 } from '../api/listings';
+import { useToast } from '../components/ToastProvider';
 
 const schema = z.object({
   categoryId: z.string().min(1),
@@ -40,6 +41,7 @@ export default function EditListingPage() {
   const { id } = useParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,6 +80,7 @@ export default function EditListingPage() {
     setServerError(null);
     try {
       await updateListing(id, values);
+      showToast('Listing saved', 'success');
       navigate('/me/listings', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) setServerError(err.message);

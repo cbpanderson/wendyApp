@@ -16,11 +16,13 @@ import { getDeal } from '../api/deals';
 import { submitRating } from '../api/ratings';
 import { ApiError } from '../api/client';
 import type { Deal } from '../api/deals';
+import { useToast } from '../components/ToastProvider';
 
 export default function RateDealPage() {
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [stars, setStars] = useState<number | null>(null);
   const [review, setReview] = useState('');
@@ -74,6 +76,7 @@ export default function RateDealPage() {
     setError(null);
     try {
       await submitRating(id!, stars, review.trim() || undefined);
+      showToast('Rating submitted — thanks!', 'success');
       navigate(`/users/${otherParty.handle}`);
     } catch (err) {
       if (err instanceof ApiError) {

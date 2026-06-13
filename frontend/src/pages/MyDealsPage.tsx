@@ -48,10 +48,10 @@ export default function MyDealsPage() {
         ) : (
           <Stack spacing={2}>
             {data.items.map((deal) => {
-              const otherParty =
-                user?.handle === deal.participantA.handle
-                  ? deal.participantB
-                  : deal.participantA;
+              const isParticipantA = user?.handle === deal.participantA.handle;
+              const otherParty = isParticipantA
+                ? deal.participantB
+                : deal.participantA;
               return (
                 <Box
                   key={deal.id}

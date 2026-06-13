@@ -27,6 +27,7 @@ import {
   uploadPhoto,
 } from '../api/listings';
 import PhotoPicker from '../components/PhotoPicker';
+import { useToast } from '../components/ToastProvider';
 
 const schema = z.object({
   categoryId: z.string().min(1, 'Choose a category'),
@@ -43,6 +44,7 @@ type FormValues = z.infer<typeof schema>;
 export default function CreateListingPage() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
@@ -82,6 +84,7 @@ export default function CreateListingPage() {
           break;
         }
       }
+      showToast('Listing created!', 'success');
       navigate('/me/listings', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) setServerError(err.message);

@@ -20,11 +20,13 @@ import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
 import { getListing, getMyListings, Listing } from '../api/listings';
 import { createOffer, OfferKind } from '../api/offers';
+import { useToast } from '../components/ToastProvider';
 
 export default function MakeOfferPage() {
   const { id = '' } = useParams<{ id: string }>();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [target, setTarget] = useState<Listing | null>(null);
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,6 +99,7 @@ export default function MakeOfferPage() {
         offeredListingId: offerType === 'TRADE' ? offeredListingId : null,
         message: message.trim() === '' ? undefined : message,
       });
+      showToast('Offer sent!', 'success');
       navigate('/me/offers?direction=sent', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) setServerError(err.message);
