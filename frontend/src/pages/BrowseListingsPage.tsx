@@ -18,6 +18,7 @@ import {
 } from '../api/listings';
 import ListingCard from '../components/ListingCard';
 import EmptyState from '../components/EmptyState';
+import { useAuth } from '../auth/AuthContext';
 
 const MagnifyingGlassIllustration = (
   <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="100" height="80">
@@ -31,6 +32,7 @@ const MagnifyingGlassIllustration = (
 const PAGE_SIZE = 20;
 
 export default function BrowseListingsPage() {
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<Listing[]>([]);
   const [total, setTotal] = useState(0);
@@ -174,9 +176,11 @@ export default function BrowseListingsPage() {
               gap: 2,
             }}
           >
-            {items.map((l) => (
-              <ListingCard key={l.id} listing={l} />
-            ))}
+            {items
+              .filter((l) => !user || l.owner.handle !== user.handle)
+              .map((l) => (
+                <ListingCard key={l.id} listing={l} />
+              ))}
           </Box>
         )}
 
