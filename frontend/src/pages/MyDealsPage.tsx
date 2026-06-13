@@ -14,6 +14,7 @@ import { getMyDeals } from '../api/deals';
 import type { DealPage } from '../api/deals';
 import type { DealStatus } from '../api/offers';
 import EmptyState from '../components/EmptyState';
+import { dealStatusLabel } from '../utils/statusLabels';
 
 const SwapCirclesIllustration = (
   <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="100" height="80">
@@ -99,7 +100,7 @@ export default function MyDealsPage() {
                         </Link>
                       </Typography>
                     </Box>
-                    <Chip label={deal.status} color={statusColor(deal.status)} size="small" />
+                    <Chip label={dealStatusLabel(deal.status, isParticipantA)} color={statusColor(deal.status)} size="small" />
                   </Stack>
                 </Box>
               );

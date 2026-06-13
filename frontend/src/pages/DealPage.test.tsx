@@ -46,7 +46,7 @@ describe('DealPage', () => {
     expect(screen.getByText(/Bob's honey/i)).toBeInTheDocument();
     expect(screen.getByText(/@alice/i)).toBeInTheDocument();
     expect(screen.getByText(/@bob/i)).toBeInTheDocument();
-    expect(screen.getByText('ACCEPTED')).toBeInTheDocument();
+    expect(screen.getByText('In progress')).toBeInTheDocument();
   });
 
   it('"Mark as complete" button is visible when ACCEPTED', async () => {
@@ -71,7 +71,7 @@ describe('DealPage', () => {
     );
     await user.click(screen.getByRole('button', { name: /mark as complete/i }));
     await waitFor(() =>
-      expect(screen.getByText('COMPLETED_BY_A')).toBeInTheDocument()
+      expect(screen.getByText('Waiting on them')).toBeInTheDocument()
     );
   });
 
@@ -83,7 +83,7 @@ describe('DealPage', () => {
     );
     await user.click(screen.getByRole('button', { name: /cancel/i }));
     await waitFor(() =>
-      expect(screen.getByText('CANCELLED')).toBeInTheDocument()
+      expect(screen.getByText('Cancelled')).toBeInTheDocument()
     );
   });
 });

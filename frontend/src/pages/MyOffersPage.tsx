@@ -26,6 +26,7 @@ import {
 } from '../api/offers';
 import { useToast } from '../components/ToastProvider';
 import EmptyState from '../components/EmptyState';
+import { offerStatusLabel } from '../utils/statusLabels';
 
 const EnvelopeIllustration = (
   <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="100" height="80">
@@ -168,7 +169,7 @@ export default function MyOffersPage() {
                     <Box sx={{ flexGrow: 1 }}>
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Chip
-                          label={o.status}
+                          label={offerStatusLabel(o.status)}
                           color={statusColor(o.status)}
                           size="small"
                         />

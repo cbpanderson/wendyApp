@@ -6,6 +6,7 @@ import { getDeal, markComplete, cancelDeal } from '../api/deals';
 import type { Deal } from '../api/deals';
 import type { DealStatus } from '../api/offers';
 import { useToast } from '../components/ToastProvider';
+import { dealStatusLabel } from '../utils/statusLabels';
 
 function statusColor(
   status: DealStatus
@@ -97,7 +98,7 @@ export default function DealPage() {
           </Box>
 
           <Box>
-            <Chip label={status} color={statusColor(status)} />
+            <Chip label={dealStatusLabel(status, isParticipantA)} color={statusColor(status)} />
           </Box>
 
           {markCompleteMutation.isError && (

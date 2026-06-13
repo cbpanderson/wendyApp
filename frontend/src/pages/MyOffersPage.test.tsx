@@ -54,11 +54,11 @@ describe('MyOffersPage', () => {
     await waitFor(() =>
       expect(screen.getByText(/Bob's honey/i)).toBeInTheDocument()
     );
-    expect(screen.getByText('PENDING')).toBeInTheDocument();
+    expect(screen.getByText('Pending')).toBeInTheDocument();
     const withdraw = screen.getByRole('button', { name: /withdraw/i });
     await user.click(withdraw);
     await waitFor(() =>
-      expect(screen.getByText('WITHDRAWN')).toBeInTheDocument()
+      expect(screen.getByText('Withdrawn')).toBeInTheDocument()
     );
   });
 
@@ -78,7 +78,7 @@ describe('MyOffersPage', () => {
       expect(screen.getByText(/My eggs/i)).toBeInTheDocument()
     );
     await user.click(screen.getByRole('button', { name: /^decline$/i }));
-    await waitFor(() => expect(screen.getByText('DECLINED')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Declined')).toBeInTheDocument());
   });
 
   it('accepts a received offer and navigates to the deal page', async () => {

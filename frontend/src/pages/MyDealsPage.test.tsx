@@ -45,7 +45,7 @@ describe('MyDealsPage', () => {
       expect(screen.getByText(/My eggs/i)).toBeInTheDocument()
     );
     expect(screen.getByText(/@bob/i)).toBeInTheDocument();
-    expect(screen.getByText('ACCEPTED')).toBeInTheDocument();
+    expect(screen.getByText('In progress')).toBeInTheDocument();
     // Link to deal detail
     const link = screen.getByRole('link', { name: /My eggs/i });
     expect(link).toHaveAttribute('href', '/deals/deal-1');
