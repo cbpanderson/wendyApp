@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -13,6 +13,18 @@ import { useAuth } from '../auth/AuthContext';
 import { getMyDeals } from '../api/deals';
 import type { DealPage } from '../api/deals';
 import type { DealStatus } from '../api/offers';
+import EmptyState from '../components/EmptyState';
+
+const SwapCirclesIllustration = (
+  <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="100" height="80">
+    <circle cx="32" cy="40" r="22" fill="#F5EDF5" stroke="#D4B8CC" strokeWidth="1.5"/>
+    <circle cx="68" cy="40" r="22" fill="#E8F4EA" stroke="#A8CFA8" strokeWidth="1.5"/>
+    <rect x="24" y="33" width="16" height="14" rx="3" fill="#8B4A6B" opacity="0.7"/>
+    <rect x="60" y="33" width="16" height="14" rx="3" fill="#6B8F71" opacity="0.7"/>
+    <path d="M46 36 L54 40 L46 44" stroke="#C4922A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    <path d="M54 44 L46 40 L54 36" stroke="#C4922A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+  </svg>
+);
 
 function statusColor(
   status: DealStatus
@@ -25,6 +37,7 @@ function statusColor(
 
 export default function MyDealsPage() {
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery<DealPage>({
     queryKey: ['myDeals'],
@@ -44,7 +57,13 @@ export default function MyDealsPage() {
         {isLoading ? (
           <Typography>Loading…</Typography>
         ) : !data || data.items.length === 0 ? (
-          <Typography color="text.secondary">You have no deals yet.</Typography>
+          <EmptyState
+            illustration={SwapCirclesIllustration}
+            title="No deals in progress"
+            subtitle="When you and a neighbor agree to swap, your deal shows up here."
+            ctaLabel="Browse listings"
+            onCta={() => navigate('/listings')}
+          />
         ) : (
           <Stack spacing={2}>
             {data.items.map((deal) => {

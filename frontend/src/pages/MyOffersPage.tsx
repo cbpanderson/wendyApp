@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link as RouterLink, Navigate, useSearchParams, useNavigate } from 'react-router-dom';
+
 import {
   Alert,
   Box,
@@ -24,6 +25,16 @@ import {
   withdrawOffer,
 } from '../api/offers';
 import { useToast } from '../components/ToastProvider';
+import EmptyState from '../components/EmptyState';
+
+const EnvelopeIllustration = (
+  <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="100" height="80">
+    <rect x="15" y="22" width="60" height="42" rx="4" fill="#F5EDF5" stroke="#D4B8CC" strokeWidth="1.5"/>
+    <polyline points="15,22 45,46 75,22" stroke="#D4B8CC" strokeWidth="1.5" fill="none"/>
+    <path d="M68 18 L80 18 L80 30" stroke="#C4922A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    <line x1="68" y1="30" x2="80" y2="18" stroke="#C4922A" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
 
 function statusColor(
   status: OfferStatus
@@ -132,11 +143,13 @@ export default function MyOffersPage() {
         {loading ? (
           <Typography>Loading…</Typography>
         ) : offers.length === 0 ? (
-          <Typography color="text.secondary">
-            {direction === 'sent'
-              ? "You haven't made any offers yet."
-              : "You haven't received any offers yet."}
-          </Typography>
+          <EmptyState
+            illustration={EnvelopeIllustration}
+            title="No offers yet"
+            subtitle="Browse what your neighbors have and make your first offer. It's just that simple."
+            ctaLabel="Browse listings"
+            onCta={() => navigate('/listings')}
+          />
         ) : (
           <Stack spacing={2}>
             {offers.map((o) => {

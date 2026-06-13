@@ -17,6 +17,16 @@ import {
   OfferType,
 } from '../api/listings';
 import ListingCard from '../components/ListingCard';
+import EmptyState from '../components/EmptyState';
+
+const MagnifyingGlassIllustration = (
+  <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="100" height="80">
+    <circle cx="42" cy="36" r="22" fill="#F5EDF5" stroke="#D4B8CC" strokeWidth="1.5"/>
+    <line x1="58" y1="52" x2="74" y2="68" stroke="#D4B8CC" strokeWidth="4" strokeLinecap="round"/>
+    <line x1="34" y1="32" x2="50" y2="32" stroke="#8B4A6B" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+    <line x1="34" y1="38" x2="46" y2="38" stroke="#8B4A6B" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+  </svg>
+);
 
 const PAGE_SIZE = 20;
 
@@ -90,6 +100,13 @@ export default function BrowseListingsPage() {
 
   const hasMore = items.length < total;
 
+  const clearFilters = () => {
+    setQueryInput('');
+    setQ('');
+    setCategoryId('');
+    setOfferType('');
+  };
+
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 6 }}>
@@ -142,9 +159,13 @@ export default function BrowseListingsPage() {
         {loading && items.length === 0 ? (
           <Typography>Loading…</Typography>
         ) : items.length === 0 ? (
-          <Typography color="text.secondary">
-            No listings match your filters yet.
-          </Typography>
+          <EmptyState
+            illustration={MagnifyingGlassIllustration}
+            title="Nothing here yet"
+            subtitle="No listings match your filters yet — try a different search or category, or be the first to post one."
+            ctaLabel="Clear filters"
+            onCta={clearFilters}
+          />
         ) : (
           <Box
             sx={{

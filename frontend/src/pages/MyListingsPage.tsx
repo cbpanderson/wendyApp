@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link as RouterLink, Navigate } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -15,9 +15,23 @@ import {
 } from '@mui/material';
 import { useAuth } from '../auth/AuthContext';
 import { deleteListing, getMyListings, Listing } from '../api/listings';
+import EmptyState from '../components/EmptyState';
+
+const HouseIllustration = (
+  <svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="100" height="80">
+    <rect x="20" y="38" width="60" height="36" rx="3" fill="#F5EDF5" stroke="#D4B8CC" strokeWidth="1.5"/>
+    <polygon points="50,12 15,40 85,40" fill="#8B4A6B" opacity="0.85"/>
+    <rect x="40" y="50" width="20" height="24" rx="2" fill="#D4B8CC"/>
+    <rect x="24" y="46" width="14" height="12" rx="2" fill="white" stroke="#D4B8CC" strokeWidth="1"/>
+    <circle cx="78" cy="26" r="10" fill="#FDF3DC" stroke="#C4922A" strokeWidth="1.5"/>
+    <line x1="78" y1="21" x2="78" y2="31" stroke="#C4922A" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="73" y1="26" x2="83" y2="26" stroke="#C4922A" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
 
 export default function MyListingsPage() {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -66,7 +80,13 @@ export default function MyListingsPage() {
         {loading ? (
           <Typography>Loading…</Typography>
         ) : items.length === 0 ? (
-          <Typography color="text.secondary">You don't have any listings yet.</Typography>
+          <EmptyState
+            illustration={HouseIllustration}
+            title="Nothing to swap yet"
+            subtitle="Share something you have — a skill, a harvest, a spare. Your neighbors are ready."
+            ctaLabel="Post your first listing"
+            onCta={() => navigate('/listings/new')}
+          />
         ) : (
           <Stack spacing={2}>
             {items.map((l) => (
