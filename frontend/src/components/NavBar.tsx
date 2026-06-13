@@ -90,12 +90,12 @@ export default function NavBar() {
                 <MenuItem
                   onClick={() => { handleActivityClose(); navigate('/me/offers'); }}
                 >
-                  My offers
+                  Offers
                 </MenuItem>
                 <MenuItem
                   onClick={() => { handleActivityClose(); navigate('/me/deals'); }}
                 >
-                  My deals
+                  Deals
                 </MenuItem>
                 <MenuItem
                   onClick={() => { handleActivityClose(); navigate('/me/listings'); }}
